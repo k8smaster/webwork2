@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rserve-deploy
+  labels:
+    app: rserve
+spec:
+  template:
+    metadata:
+      labels:
+        app: rserve
+    spec:
+      containers:
+      - image: hosseinmohammadi/ww2_1:v1
+        name: ww2-rserve
+  replicas: 1
+  selector:
+    matchLabels:      
+      app: rserve
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rserve-service
+spec:
+  selector:
+    app: rserve
+  ports:
+    - protocol: TCP
+      port: 6311
+      name: rserveport

@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: webwork-pv
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  capacity:
+    storage: "2Gi"
+  hostPath:
+    path: /mnt/cs
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: webwork-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ww2-deploy
+  labels:
+    app: ww2
+    type: webwork2
+spec:
+  template:
+    metadata:
+      name: ww2-pod
+      labels:
+        app: ww2
+        type: webwork2
+    spec:
+      containers:
+      - image: hosseinmohammadi/ww2:v1
+        name: ww2-pod
+        ports:
+          - containerPort: 80
+            name: webwork-port
+        volumeMounts:
+          - mountPath: "/opt/webwork/courses"
+            name: courses-volume
+            subPath: "courses"
+        volumes:
+          - name: courses-volume
+            persistentVolumeClaim:
+              claimName: webwork-pvc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ww2
+      type: webwork2
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webwork-service
+spec:
+  selector:
+    app: ww2
+    type: webwork2
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: NodePort
